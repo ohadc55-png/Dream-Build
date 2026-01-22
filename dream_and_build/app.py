@@ -8,19 +8,11 @@ st.set_page_config(
     page_title="Dream & Build - ניהול סדנאות נגרות",
     page_icon="🔨",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded"  # תמיד מורחב
 )
 
 # החלת עיצוב מותאם
 apply_custom_css()
-
-# טעינת תמונות
-def get_base64_image(image_path):
-    try:
-        with open(image_path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except:
-        return None
 
 # בדיקת אימות
 if 'authenticated' not in st.session_state:
@@ -34,10 +26,8 @@ if not st.session_state.authenticated:
     # לוגו
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        try:
-            st.image("assets/logo.png", width=300)
-        except:
-            st.title("🔨 Dream & Build")
+        st.markdown("<h1 style='text-align: center; font-size: 4rem;'>🔨</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #1A2840;'>Dream & <span style='color: #FF8C00;'>Build</span></h1>", unsafe_allow_html=True)
     
     st.markdown("<h2 style='text-align: center; color: #FF8C00;'>מערכת ניהול סדנאות נגרות</h2>", unsafe_allow_html=True)
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
@@ -47,14 +37,15 @@ if not st.session_state.authenticated:
     
     with tab1:
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        with st.form("login_form"):
+        with st.form("login_form", clear_on_submit=False):
             email = st.text_input("📧 אימייל", placeholder="example@email.com")
             password = st.text_input("🔒 סיסמה", type="password", placeholder="הכנס סיסמה")
             submit = st.form_submit_button("כניסה", use_container_width=True)
             
             if submit:
                 if email and password:
-                    result = login(email, password)
+                    with st.spinner("מתחבר..."):
+                        result = login(email, password)
                     if result['success']:
                         st.session_state.authenticated = True
                         st.session_state.user = result['user']
@@ -67,12 +58,12 @@ if not st.session_state.authenticated:
     
     with tab2:
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        with st.form("register_form"):
+        with st.form("register_form", clear_on_submit=False):
             full_name = st.text_input("👤 שם מלא", placeholder="הכנס שם מלא")
-            email_reg = st.text_input("📧 אימייל", placeholder="example@email.com")
+            email_reg = st.text_input("📧 אימייל", placeholder="example@email.com", key="email_reg")
             phone = st.text_input("📱 טלפון", placeholder="050-1234567")
-            password_reg = st.text_input("🔒 סיסמה", type="password", placeholder="בחר סיסמה חזקה")
-            password_confirm = st.text_input("🔒 אימות סיסמה", type="password", placeholder="הכנס סיסמה שוב")
+            password_reg = st.text_input("🔒 סיסמה", type="password", placeholder="בחר סיסמה חזקה", key="pass_reg")
+            password_confirm = st.text_input("🔒 אימות סיסמה", type="password", placeholder="הכנס סיסמה שוב", key="pass_confirm")
             role = st.selectbox("תפקיד", ["employee", "manager"], 
                                format_func=lambda x: "עובד" if x == "employee" else "מנהל")
             
@@ -86,26 +77,28 @@ if not st.session_state.authenticated:
                 elif len(password_reg) < 6:
                     st.error("❌ הסיסמה חייבת להכיל לפחות 6 תווים")
                 else:
-                    result = register(email_reg, password_reg, full_name, phone, role)
+                    with st.spinner("נרשם..."):
+                        result = register(email_reg, password_reg, full_name, phone, role)
                     if result['success']:
                         st.success("✅ נרשמת בהצלחה! אפשר להתחבר עכשיו")
+                        st.balloons()
                     else:
                         st.error(f"❌ {result['message']}")
 
 # עמוד ראשי לאחר התחברות
 else:
-    # Sidebar
+    # Sidebar - תמיד מוצג
     with st.sidebar:
-        try:
-            st.image("assets/logo.png", width=200)
-        except:
-            st.title("🔨 D&B")
+        st.markdown("<h1 style='text-align: center; font-size: 2.5rem;'>🔨</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>Dream & Build</h3>", unsafe_allow_html=True)
         
+        st.markdown("---")
         st.markdown(f"### שלום, {st.session_state.user.get('full_name', 'משתמש')}! 👋")
         st.markdown(f"**תפקיד:** {'מנהל' if st.session_state.user.get('role') == 'manager' else 'עובד'}")
         st.markdown("---")
         
         # תפריט ניווט
+        st.markdown("### 📌 תפריט")
         if st.session_state.user.get('role') == 'manager':
             st.page_link("pages/1_📊_dashboard_manager.py", label="📊 דשבורד מנהלים")
             st.page_link("pages/3_🏫_schools.py", label="🏫 ניהול בתי ספר")
@@ -119,7 +112,7 @@ else:
             st.page_link("pages/6_🔧_equipment.py", label="🔧 דיווח ציוד")
         
         st.markdown("---")
-        if st.button("🚪 התנתקות", use_container_width=True):
+        if st.button("🚪 התנתקות", use_container_width=True, type="primary"):
             logout()
             st.rerun()
     
