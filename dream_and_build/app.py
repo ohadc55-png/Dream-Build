@@ -100,16 +100,16 @@ else:
         # תפריט ניווט
         st.markdown("### 📌 תפריט")
         if st.session_state.user.get('role') == 'manager':
-            st.page_link("pages/1_📊_dashboard_manager.py", label="📊 דשבורד מנהלים")
-            st.page_link("pages/3_🏫_schools.py", label="🏫 ניהול בתי ספר")
-            st.page_link("pages/4_👥_employees.py", label="👥 ניהול עובדים")
-            st.page_link("pages/5_📅_schedule.py", label="📅 ניהול לו״ז")
-            st.page_link("pages/6_🔧_equipment.py", label="🔧 ניהול ציוד")
-            st.page_link("pages/7_💰_finance.py", label="💰 דוחות כספיים")
+            st.page_link("pages/dashboard_manager.py", label="📊 דשבורד מנהלים")
+            st.page_link("pages/schools.py", label="🏫 ניהול בתי ספר")
+            st.page_link("pages/employees.py", label="👥 ניהול עובדים")
+            st.page_link("pages/schedule.py", label="📅 ניהול לו״ז")
+            st.page_link("pages/equipment.py", label="🔧 ניהול ציוד")
+            st.page_link("pages/finance.py", label="💰 דוחות כספיים")
         else:
-            st.page_link("pages/2_👷_dashboard_employee.py", label="👷 הדשבורד שלי")
-            st.page_link("pages/5_📅_schedule.py", label="📅 הלו״ז שלי")
-            st.page_link("pages/6_🔧_equipment.py", label="🔧 דיווח ציוד")
+            st.page_link("pages/dashboard_employee.py", label="👷 הדשבורד שלי")
+            st.page_link("pages/schedule.py", label="📅 הלו״ז שלי")
+            st.page_link("pages/equipment.py", label="🔧 דיווח ציוד")
         
         st.markdown("---")
         if st.button("🚪 התנתקות", use_container_width=True, type="primary"):
