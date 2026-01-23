@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="Dream & Build - ניהול סדנאות נגרות",
     page_icon="🔨",
     layout="wide",
-    initial_sidebar_state="expanded"  # תמיד מורחב
+    initial_sidebar_state="expanded"
 )
 
 # החלת עיצוב מותאם
@@ -87,19 +87,22 @@ if not st.session_state.authenticated:
 
 # עמוד ראשי לאחר התחברות
 else:
-    # Sidebar - תמיד מוצג
+    # Sidebar
     with st.sidebar:
         st.markdown("<h1 style='text-align: center; font-size: 2.5rem;'>🔨</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center;'>Dream & Build</h3>", unsafe_allow_html=True)
         
         st.markdown("---")
-        st.markdown(f"### שלום, {st.session_state.user.get('full_name', 'משתמש')}! 👋")
-        st.markdown(f"**תפקיד:** {'מנהל' if st.session_state.user.get('role') == 'manager' else 'עובד'}")
+        user_name = st.session_state.user.get('full_name', 'משתמש')
+        user_role = st.session_state.user.get('role', 'employee')
+        
+        st.markdown(f"### שלום, {user_name}! 👋")
+        st.markdown(f"**תפקיד:** {'מנהל' if user_role == 'manager' else 'עובד'}")
         st.markdown("---")
         
-        # תפריט ניווט
+        # תפריט ניווט - מותאם בדיוק לשמות הקבצים בתמונה שלך (בלי מספרים)
         st.markdown("### 📌 תפריט")
-        if st.session_state.user.get('role') == 'manager':
+        if user_role == 'manager':
             st.page_link("pages/dashboard_manager.py", label="📊 דשבורד מנהלים")
             st.page_link("pages/schools.py", label="🏫 ניהול בתי ספר")
             st.page_link("pages/employees.py", label="👥 ניהול עובדים")
