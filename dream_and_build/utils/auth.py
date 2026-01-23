@@ -1,17 +1,14 @@
 import streamlit as st
 import time
 
-# פונקציית התחברות "פיתוח" - ללא סיסמה
 def login_dev(email: str, role: str, full_name: str):
-    """התחברות מהירה למטרות בדיקה"""
-    
+    """התחברות מהירה למטרות בדיקה ופיתוח"""
     # סימולציה של טעינה
     time.sleep(0.5)
     
     # יצירת אובייקט משתמש מדמה
-    # אנחנו משתמשים באימייל גם כ-ID כדי לשמור על עקביות בבדיקות
     user_data = {
-        "id": email,  # מפתח ייחודי לבדיקה
+        "id": email, # משתמשים באימייל כמזהה ייחודי זמני
         "email": email,
         "full_name": full_name,
         "role": role,
@@ -44,7 +41,6 @@ def check_auth():
 def require_role(role: str):
     """בדיקת הרשאה"""
     user = check_auth()
-    # מנהל יכול לראות הכל, עובד רק את שלו
     if role == 'manager' and user.get('role') != 'manager':
         st.error("🔒 אין לך הרשאה לצפות בדף זה")
         st.stop()
