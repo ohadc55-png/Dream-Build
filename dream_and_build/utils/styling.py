@@ -1,234 +1,368 @@
 import streamlit as st
 
 def apply_custom_css():
-    """החלת עיצוב מותאם אישית"""
+    """עיצוב מקצועי בסגנון דשבורד מודרני"""
+    
     st.markdown("""
     <style>
-    /* ייבוא פונטים בעברית */
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
+    /* ===== ייבוא פונט ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
     
-    /* הגדרות כלליות */
+    /* ===== משתני צבעים ===== */
+    :root {
+        --primary-dark: #1A2840;
+        --primary-blue: #3B82F6;
+        --green-dark: #047857;
+        --green-light: #10B981;
+        --orange-accent: #FF8C00;
+        --orange-light: #FFA500;
+        --gray-900: #111827;
+        --gray-700: #374151;
+        --gray-600: #4B5563;
+        --gray-500: #6B7280;
+        --gray-400: #9CA3AF;
+        --gray-200: #E5E7EB;
+        --gray-100: #F3F4F6;
+        --gray-50: #F9FAFB;
+        --white: #FFFFFF;
+        --danger: #EF4444;
+        --warning: #F59E0B;
+    }
+    
+    /* ===== הגדרות כלליות ===== */
     * {
         font-family: 'Heebo', sans-serif !important;
-        direction: rtl;
     }
     
-    /* רקע עם תמונת הסדנה */
     .stApp {
-        background: linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)),
-                    url('data:image/jpeg;base64,/9j/4AAQSkZJRg...') center/cover no-repeat fixed;
-        background-color: #F5F5F5;
+        background-color: var(--gray-100);
     }
     
-    /* צבעים ראשיים */
-    :root {
-        --orange-primary: #FF8C00;
-        --orange-light: #FFA500;
-        --blue-dark: #1A2840;
-        --blue-medium: #2C3E50;
-        --gray-light: #E8E8E8;
-        --wood-brown: #A67C52;
-        --cream: #F5F5F5;
+    /* ===== הסתרת תפריט ברירת מחדל ===== */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
     }
     
-    /* כותרות */
-    h1, h2, h3 {
-        color: var(--blue-dark) !important;
-        font-weight: 700 !important;
+    #MainMenu, footer, header {
+        visibility: hidden;
     }
     
-    /* כפתורים */
-    .stButton > button {
-        background: linear-gradient(135deg, var(--orange-primary) 0%, var(--orange-light) 100%);
-        color: white !important;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 2rem;
-        font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(255, 140, 0, 0.3);
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(255, 140, 0, 0.4);
-        background: linear-gradient(135deg, var(--orange-light) 0%, var(--orange-primary) 100%);
-    }
-    
-    /* שדות קלט */
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div > select,
-    .stTextArea > div > div > textarea {
-        border: 2px solid var(--gray-light) !important;
-        border-radius: 8px !important;
-        padding: 0.5rem !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease;
-    }
-    
-    .stTextInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: var(--orange-primary) !important;
-        box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1) !important;
-    }
-    
-    /* טאבים */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: transparent;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background-color: white;
-        border-radius: 8px 8px 0 0;
-        padding: 0.75rem 1.5rem;
-        color: var(--blue-dark);
-        font-weight: 500;
-        border: 2px solid var(--gray-light);
-        border-bottom: none;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--orange-primary) 0%, var(--orange-light) 100%);
-        color: white !important;
-        border-color: var(--orange-primary);
-    }
-    
-    /* כרטיסים */
-    .element-container div[data-testid="stMetric"] {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-right: 4px solid var(--orange-primary);
-    }
-    
-    /* Sidebar */
+    /* ===== Sidebar ===== */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, var(--blue-dark) 0%, var(--blue-medium) 100%);
-        color: white !important;
+        background: linear-gradient(180deg, var(--primary-dark) 0%, #0F172A 100%);
+        border-left: 1px solid rgba(255,255,255,0.1);
     }
     
     [data-testid="stSidebar"] * {
-        color: white !important;
+        color: var(--white) !important;
     }
     
     [data-testid="stSidebar"] .stButton > button {
-        background: rgba(255, 140, 0, 0.2);
-        border: 2px solid var(--orange-primary);
+        background: rgba(255, 140, 0, 0.15);
+        border: 1px solid var(--orange-accent);
+        color: var(--orange-accent) !important;
+        transition: all 0.3s ease;
     }
     
     [data-testid="stSidebar"] .stButton > button:hover {
-        background: var(--orange-primary);
+        background: var(--orange-accent);
+        color: var(--white) !important;
+        transform: translateX(-3px);
     }
     
-    /* הודעות */
-    .stSuccess {
-        background-color: rgba(0, 200, 100, 0.1);
-        border-right: 4px solid #00C864;
+    /* ===== כותרות ===== */
+    h1 {
+        color: var(--gray-900) !important;
+        font-weight: 800 !important;
+        font-size: 2rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    h2, h3 {
+        color: var(--gray-700) !important;
+        font-weight: 700 !important;
+    }
+    
+    /* ===== Metric Cards ===== */
+    [data-testid="stMetric"] {
+        background: var(--white);
+        padding: 1.25rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+    }
+    
+    [data-testid="stMetric"]:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    [data-testid="stMetric"] label {
+        color: var(--gray-500) !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+    }
+    
+    [data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: var(--gray-900) !important;
+        font-size: 1.875rem !important;
+        font-weight: 700 !important;
+    }
+    
+    /* ===== כפתורים ===== */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--orange-accent) 0%, var(--orange-light) 100%);
+        color: var(--white) !important;
+        border: none;
         border-radius: 8px;
-        padding: 1rem;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(255, 140, 0, 0.3);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 140, 0, 0.4);
+    }
+    
+    .stButton > button:active {
+        transform: translateY(0);
+    }
+    
+    /* ===== טפסים ===== */
+    [data-testid="stForm"] {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    /* ===== שדות קלט ===== */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div,
+    .stDateInput > div > div > input,
+    .stTimeInput > div > div > input,
+    .stNumberInput > div > div > input {
+        border-radius: 8px !important;
+        border: 1.5px solid var(--gray-200) !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div:focus-within,
+    .stNumberInput > div > div > input:focus {
+        border-color: var(--primary-blue) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+    
+    /* ===== טאבים ===== */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0;
+        background: var(--white);
+        border-radius: 10px;
+        padding: 4px;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 500;
+        color: var(--gray-600);
+        background: transparent;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: var(--primary-dark) !important;
+        color: var(--white) !important;
+    }
+    
+    /* ===== טבלאות (DataFrame) ===== */
+    [data-testid="stDataFrame"] {
+        background: var(--white);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--gray-200);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    [data-testid="stDataFrame"] table {
+        width: 100%;
+    }
+    
+    [data-testid="stDataFrame"] thead tr th {
+        background: var(--gray-50) !important;
+        color: var(--gray-700) !important;
+        font-weight: 600 !important;
+        padding: 0.875rem 1rem !important;
+        border-bottom: 2px solid var(--gray-200) !important;
+        font-size: 0.85rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    [data-testid="stDataFrame"] tbody tr td {
+        padding: 0.75rem 1rem !important;
+        border-bottom: 1px solid var(--gray-100) !important;
+        color: var(--gray-700) !important;
+    }
+    
+    [data-testid="stDataFrame"] tbody tr:hover td {
+        background: var(--gray-50) !important;
+    }
+    
+    /* ===== Expander ===== */
+    .streamlit-expanderHeader {
+        background: var(--white) !important;
+        border: 1px solid var(--gray-200) !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        color: var(--gray-700) !important;
+    }
+    
+    .streamlit-expanderContent {
+        background: var(--white) !important;
+        border: 1px solid var(--gray-200) !important;
+        border-top: none !important;
+        border-radius: 0 0 8px 8px !important;
+    }
+    
+    /* ===== הודעות ===== */
+    .stSuccess {
+        background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+        color: var(--green-dark) !important;
+        border: none;
+        border-radius: 8px;
+        border-right: 4px solid var(--green-dark);
     }
     
     .stError {
-        background-color: rgba(255, 75, 75, 0.1);
-        border-right: 4px solid #FF4B4B;
+        background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+        color: #991B1B !important;
+        border: none;
         border-radius: 8px;
-        padding: 1rem;
+        border-right: 4px solid var(--danger);
     }
     
     .stWarning {
-        background-color: rgba(255, 196, 0, 0.1);
-        border-right: 4px solid #FFC400;
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        color: #92400E !important;
+        border: none;
         border-radius: 8px;
-        padding: 1rem;
+        border-right: 4px solid var(--warning);
     }
     
     .stInfo {
-        background-color: rgba(33, 150, 243, 0.1);
-        border-right: 4px solid #2196F3;
+        background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+        color: #1E40AF !important;
+        border: none;
         border-radius: 8px;
-        padding: 1rem;
+        border-right: 4px solid var(--primary-blue);
     }
     
-    /* טבלאות */
-    .dataframe {
-        border: none !important;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* ===== Divider ===== */
+    hr {
+        border: none;
+        height: 1px;
+        background: var(--gray-200);
+        margin: 1.5rem 0;
     }
     
-    .dataframe thead tr th {
-        background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-medium) 100%) !important;
-        color: white !important;
-        font-weight: 600 !important;
-        padding: 1rem !important;
+    /* ===== Progress Bar ===== */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, var(--green-dark) 0%, var(--green-light) 100%);
+        border-radius: 10px;
     }
     
-    .dataframe tbody tr:hover {
-        background-color: rgba(255, 140, 0, 0.05) !important;
-    }
-    
-    /* פורמים */
-    .stForm {
-        background: white;
-        padding: 2rem;
+    /* ===== Plotly Charts Customization ===== */
+    .js-plotly-plot {
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--gray-light);
+        overflow: hidden;
     }
     
-    /* Badge לציוד */
-    .equipment-badge {
+    /* ===== Custom Card Class ===== */
+    .custom-card {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 1rem;
+    }
+    
+    .card-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--gray-900);
+    }
+    
+    .card-value.green { color: var(--green-dark); }
+    .card-value.blue { color: var(--primary-blue); }
+    .card-value.orange { color: var(--orange-accent); }
+    
+    /* ===== Badge Styles ===== */
+    .badge {
         display: inline-block;
-        background: #FF4B4B;
-        color: white;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        text-align: center;
-        line-height: 24px;
-        font-weight: bold;
-        font-size: 0.8rem;
-        margin-right: 8px;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
     }
     
-    /* אנימציות */
+    .badge-success { background: #D1FAE5; color: #065F46; }
+    .badge-warning { background: #FEF3C7; color: #92400E; }
+    .badge-danger { background: #FEE2E2; color: #991B1B; }
+    .badge-info { background: #DBEAFE; color: #1E40AF; }
+    .badge-gray { background: #F3F4F6; color: #374151; }
+    
+    /* ===== Animation ===== */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     
     .element-container {
-        animation: fadeIn 0.5s ease-out;
+        animation: fadeIn 0.3s ease-out;
     }
     
-    /* התאמה למובייל */
+    /* ===== Responsive ===== */
     @media (max-width: 768px) {
-        .stButton > button {
-            width: 100%;
-            padding: 0.75rem;
-        }
-        
-        h1 {
-            font-size: 1.5rem !important;
-        }
-        
-        h2 {
-            font-size: 1.25rem !important;
-        }
-        
-        .element-container div[data-testid="stMetric"] {
-            padding: 1rem;
-        }
+        h1 { font-size: 1.5rem !important; }
+        [data-testid="stMetric"] { padding: 1rem; }
+        [data-testid="stMetric"] [data-testid="stMetricValue"] { font-size: 1.5rem !important; }
     }
     
-    /* הסתרת אלמנטים מיותרים */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
+
+
+def create_metric_card(title: str, value: str, color: str = "default", icon: str = ""):
+    """יצירת כרטיס מטריקה מותאם אישית"""
+    color_class = f"card-value {color}" if color != "default" else "card-value"
+    icon_html = f"<span style='font-size: 1.5rem; margin-left: 0.5rem;'>{icon}</span>" if icon else ""
+    
+    return f"""
+    <div class="custom-card">
+        <div class="card-title">{icon_html}{title}</div>
+        <div class="{color_class}">{value}</div>
+    </div>
+    """
+
+
+def create_badge(text: str, status: str = "info"):
+    """יצירת Badge"""
+    return f'<span class="badge badge-{status}">{text}</span>'

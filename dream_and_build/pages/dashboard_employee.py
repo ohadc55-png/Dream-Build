@@ -2,247 +2,191 @@ import streamlit as st
 from utils.auth import require_role
 from utils.styling import apply_custom_css
 from utils.supabase_client import supabase
+from utils.nav import render_sidebar
 import pandas as pd
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="הדשבורד שלי", page_icon="👷", layout="wide")
+# === הגדרות עמוד ===
+st.set_page_config(page_title="הדשבורד שלי | Dream & Build", page_icon="👷", layout="wide")
 apply_custom_css()
+render_sidebar()
 
-# וידוא הרשאות
+# === וידוא הרשאות ===
 user = require_role('employee')
 
-st.title("👷 הדשבורד האישי שלי")
-st.markdown(f"### שלום {user['full_name']}, הנה סיכום הפעילות שלך")
+# === כותרת ===
+st.markdown(f"""
+<h1 style='margin-bottom: 0;'>👷 שלום, {user.get('full_name', 'עובד')}!</h1>
+<p style='color: #6B7280; margin-top: 0.25rem;'>הנה סקירת הפעילויות שלך</p>
+""", unsafe_allow_html=True)
 
-# סטטיסטיקות אישיות
-col1, col2, col3 = st.columns(3)
+st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
+# === שליפת נתונים ===
 try:
-    # פעילויות החודש
     today = datetime.now().date()
     month_start = today.replace(day=1)
+    week_start = today - timedelta(days=today.weekday())
     
-    activities_month = supabase.table("activities") \
-        .select("*") \
+    # פעילויות החודש
+    my_activities = supabase.table("activities") \
+        .select("*, schools(name)") \
         .eq("employee_id", user['id']) \
         .gte("date", str(month_start)) \
+        .order("date") \
         .execute()
     
-    # פעילויות השבוע
-    week_start = today - timedelta(days=today.weekday())
-    activities_week = supabase.table("activities") \
-        .select("*") \
-        .eq("employee_id", user['id']) \
-        .gte("date", str(week_start)) \
-        .execute()
+    activities_data = my_activities.data if my_activities.data else []
+    
+    # חישובים
+    total_month = len(activities_data)
+    completed = len([a for a in activities_data if a['status'] == 'completed'])
+    pending_confirm = len([a for a in activities_data if a['status'] in ['planned', 'confirmed'] and not a.get('confirmed_by_employee') and a['date'] <= str(today)])
+    upcoming = len([a for a in activities_data if a['date'] >= str(today) and a['status'] in ['planned', 'confirmed']])
     
     # בתי ספר ייחודיים
-    all_activities = supabase.table("activities") \
-        .select("school_id") \
-        .eq("employee_id", user['id']) \
-        .execute()
+    unique_schools = len(set([a['school_id'] for a in activities_data if a.get('school_id')]))
     
-    unique_schools = len(set([a['school_id'] for a in all_activities.data])) if all_activities.data else 0
-    
-    with col1:
-        st.metric("פעילויות החודש", len(activities_month.data) if activities_month.data else 0)
-    
-    with col2:
-        st.metric("פעילויות השבוע", len(activities_week.data) if activities_week.data else 0)
-    
-    with col3:
-        st.metric("בתי ספר שעבדתי בהם", unique_schools)
-
 except Exception as e:
-    st.error(f"שגיאה בטעינת נתונים: {str(e)}")
-    with col1:
-        st.metric("פעילויות החודש", "0")
-    with col2:
-        st.metric("פעילויות השבוע", "0")
-    with col3:
-        st.metric("בתי ספר שעבדתי בהם", "0")
+    st.error(f"שגיאה: {str(e)}")
+    total_month = completed = pending_confirm = upcoming = unique_schools = 0
+    activities_data = []
 
-st.markdown("---")
+# === KPIs ===
+col1, col2, col3, col4 = st.columns(4)
 
-# הלו"ז שלי
-col_schedule, col_pending = st.columns([2, 1])
+with col1:
+    st.markdown(f"""
+    <div style='background: white; padding: 1.25rem; border-radius: 12px; border: 1px solid #E5E7EB; border-right: 4px solid #3B82F6;'>
+        <div style='font-size: 0.85rem; color: #6B7280;'>📅 פעילויות החודש</div>
+        <div style='font-size: 2rem; font-weight: 700; color: #1A2840;'>{total_month}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-with col_schedule:
-    st.subheader("📅 הלו״ז שלי השבוע")
+with col2:
+    st.markdown(f"""
+    <div style='background: white; padding: 1.25rem; border-radius: 12px; border: 1px solid #E5E7EB; border-right: 4px solid #10B981;'>
+        <div style='font-size: 0.85rem; color: #6B7280;'>✅ הושלמו</div>
+        <div style='font-size: 2rem; font-weight: 700; color: #047857;'>{completed}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    alert_color = "#F59E0B" if pending_confirm > 0 else "#6B7280"
+    st.markdown(f"""
+    <div style='background: white; padding: 1.25rem; border-radius: 12px; border: 1px solid #E5E7EB; border-right: 4px solid {alert_color};'>
+        <div style='font-size: 0.85rem; color: #6B7280;'>⏳ ממתין לאישורך</div>
+        <div style='font-size: 2rem; font-weight: 700; color: {alert_color};'>{pending_confirm}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown(f"""
+    <div style='background: white; padding: 1.25rem; border-radius: 12px; border: 1px solid #E5E7EB; border-right: 4px solid #6B7280;'>
+        <div style='font-size: 0.85rem; color: #6B7280;'>🏫 בתי ספר</div>
+        <div style='font-size: 2rem; font-weight: 700; color: #1A2840;'>{unique_schools}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+
+# === התראה לפעילויות שצריך לאשר ===
+if pending_confirm > 0:
+    st.markdown(f"""
+    <div style='background: #FEF3C7; padding: 1rem; border-radius: 10px; border-right: 4px solid #F59E0B; margin-bottom: 1rem;'>
+        <div style='font-weight: 600; color: #92400E;'>⚠️ יש לך {pending_confirm} פעילויות שממתינות לאישור ביצוע!</div>
+        <div style='font-size: 0.9rem; color: #6B7280;'>לחץ על "אשר ביצוע" בטבלה למטה</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# === טבלאות ===
+col_upcoming, col_pending = st.columns(2)
+
+with col_upcoming:
+    st.markdown("""
+    <div style='background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #E5E7EB;'>
+        <h3 style='margin: 0 0 1rem 0; font-size: 1rem; color: #374151;'>📅 פעילויות קרובות</h3>
+    """, unsafe_allow_html=True)
     
-    try:
-        # שליפת פעילויות 7 ימים קדימה
-        end_date = (datetime.now() + timedelta(days=7)).date()
-        my_activities = supabase.table("activities") \
-            .select("*, schools(name, address)") \
-            .eq("employee_id", user['id']) \
-            .gte("date", str(today)) \
-            .lte("date", str(end_date)) \
-            .order("date") \
-            .execute()
-        
-        if my_activities.data and len(my_activities.data) > 0:
-            for activity in my_activities.data:
-                school_name = activity['schools']['name'] if activity['schools'] else 'לא ידוע'
-                school_address = activity['schools']['address'] if activity['schools'] else ''
-                
-                status_emoji = {
-                    'planned': '🟡',
-                    'confirmed': '🟢',
-                    'completed': '✅',
-                    'cancelled': '🔴'
-                }.get(activity['status'], '⚪')
-                
-                with st.expander(f"{status_emoji} {activity['date']} - {school_name}"):
-                    st.markdown(f"**שעות:** {activity['time_start']} - {activity['time_end']}")
-                    if school_address:
-                        st.markdown(f"**כתובת:** {school_address}")
-                    if activity.get('notes'):
-                        st.markdown(f"**הערות:** {activity['notes']}")
-                    
-                    # אישור פעילות
-                    if activity['status'] in ['planned', 'confirmed'] and not activity.get('confirmed_by_employee'):
-                        if st.button(f"✅ אשר ביצוע פעילות", key=f"confirm_{activity['id']}"):
-                            try:
-                                supabase.table("activities") \
-                                    .update({
-                                        "confirmed_by_employee": True,
-                                        "confirmation_time": datetime.now().isoformat(),
-                                        "status": "completed"
-                                    }) \
-                                    .eq("id", activity['id']) \
-                                    .execute()
-                                st.success("✅ הפעילות אושרה בהצלחה!")
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"שגיאה באישור: {str(e)}")
-                    elif activity.get('confirmed_by_employee'):
-                        st.success("✅ אישרת את ביצוע הפעילות")
-        else:
-            st.info("אין פעילויות מתוכננות לשבוע הקרוב")
+    upcoming_acts = [a for a in activities_data if a['date'] >= str(today) and a['status'] in ['planned', 'confirmed']]
     
-    except Exception as e:
-        st.warning("טרם שובצת לפעילויות")
+    if upcoming_acts:
+        for act in upcoming_acts[:5]:
+            status_icon = "🟢" if act['status'] == 'confirmed' else "🟡"
+            school_name = act['schools']['name'] if act.get('schools') else '-'
+            
+            st.markdown(f"""
+            <div style='background: #F9FAFB; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem;'>
+                <div style='font-weight: 600;'>{status_icon} {act['date']}</div>
+                <div style='font-size: 0.9rem; color: #6B7280;'>{school_name} | {act['time_start'][:5]} - {act['time_end'][:5]}</div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("אין פעילויות קרובות")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
 with col_pending:
-    st.subheader("⏳ ממתין לאישור")
+    st.markdown("""
+    <div style='background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #E5E7EB;'>
+        <h3 style='margin: 0 0 1rem 0; font-size: 1rem; color: #374151;'>⏳ ממתין לאישור</h3>
+    """, unsafe_allow_html=True)
     
-    try:
-        pending_activities = supabase.table("activities") \
-            .select("*, schools(name)") \
-            .eq("employee_id", user['id']) \
-            .eq("confirmed_by_employee", False) \
-            .lte("date", str(today)) \
-            .execute()
+    pending_acts = [a for a in activities_data if a['date'] <= str(today) and a['status'] in ['planned', 'confirmed'] and not a.get('confirmed_by_employee')]
+    
+    if pending_acts:
+        for act in pending_acts[:5]:
+            school_name = act['schools']['name'] if act.get('schools') else '-'
+            
+            col_info, col_btn = st.columns([3, 1])
+            with col_info:
+                st.markdown(f"""
+                <div style='background: #FEF3C7; padding: 0.75rem; border-radius: 8px;'>
+                    <div style='font-weight: 600;'>{act['date']}</div>
+                    <div style='font-size: 0.9rem; color: #6B7280;'>{school_name}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_btn:
+                if st.button("✅ אשר", key=f"confirm_{act['id']}"):
+                    supabase.table("activities").update({
+                        "confirmed_by_employee": True,
+                        "status": "completed"
+                    }).eq("id", act['id']).execute()
+                    st.rerun()
+    else:
+        st.success("✅ הכל מאושר!")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+
+# === היסטוריה ===
+st.markdown("""
+<div style='background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #E5E7EB;'>
+    <h3 style='margin: 0 0 1rem 0; font-size: 1rem; color: #374151;'>📋 היסטוריית פעילויות החודש</h3>
+""", unsafe_allow_html=True)
+
+if activities_data:
+    rows = []
+    for act in activities_data:
+        status_badge = {
+            'planned': '🟡 מתוכנן',
+            'confirmed': '🟢 מאושר',
+            'completed': '✅ הושלם',
+            'cancelled': '🔴 בוטל'
+        }.get(act['status'], act['status'])
         
-        if pending_activities.data and len(pending_activities.data) > 0:
-            st.warning(f"יש לך {len(pending_activities.data)} פעילויות שטרם אישרת!")
-            
-            for activity in pending_activities.data[:5]:
-                school_name = activity['schools']['name'] if activity['schools'] else 'לא ידוע'
-                st.markdown(f"- **{activity['date']}** - {school_name}")
-        else:
-            st.success("✅ אין פעילויות ממתינות לאישור")
+        rows.append({
+            'תאריך': act['date'],
+            'בית ספר': act['schools']['name'] if act.get('schools') else '-',
+            'שעות': f"{act['time_start'][:5]} - {act['time_end'][:5]}",
+            'סטטוס': status_badge,
+            'אושר': '✅' if act.get('confirmed_by_employee') else '❌'
+        })
     
-    except Exception as e:
-        st.info("אין פעילויות ממתינות")
+    df = pd.DataFrame(rows)
+    st.dataframe(df, use_container_width=True, hide_index=True)
+else:
+    st.info("אין פעילויות החודש")
 
-st.markdown("---")
-
-# ניתוח ביצועים אישי
-st.subheader("📊 הביצועים שלי")
-
-col_stats1, col_stats2 = st.columns(2)
-
-with col_stats1:
-    st.markdown("#### 📈 פעילויות לפי חודש")
-    try:
-        three_months_ago = (datetime.now() - timedelta(days=90)).date()
-        activities_history = supabase.table("activities") \
-            .select("date") \
-            .eq("employee_id", user['id']) \
-            .gte("date", str(three_months_ago)) \
-            .execute()
-        
-        if activities_history.data and len(activities_history.data) > 0:
-            df_history = pd.DataFrame(activities_history.data)
-            df_history['date'] = pd.to_datetime(df_history['date'])
-            df_history['month'] = df_history['date'].dt.to_period('M').astype(str)
-            monthly_count = df_history.groupby('month').size().reset_index(name='count')
-            
-            for _, row in monthly_count.iterrows():
-                st.metric(row['month'], f"{row['count']} פעילויות")
-        else:
-            st.info("טרם ביצעת פעילויות")
-    except Exception as e:
-        st.info("אין מספיק נתונים")
-
-with col_stats2:
-    st.markdown("#### 🏫 בתי הספר שלי")
-    try:
-        activities_by_school = supabase.table("activities") \
-            .select("school_id, schools(name)") \
-            .eq("employee_id", user['id']) \
-            .execute()
-        
-        if activities_by_school.data:
-            df_schools = pd.DataFrame(activities_by_school.data)
-            df_schools['school_name'] = df_schools['schools'].apply(lambda x: x['name'] if x else 'לא ידוע')
-            school_count = df_schools.groupby('school_name').size().reset_index(name='count')
-            school_count = school_count.sort_values('count', ascending=False)
-            
-            for _, row in school_count.head(5).iterrows():
-                st.markdown(f"- **{row['school_name']}**: {row['count']} פעילויות")
-        else:
-            st.info("טרם עבדת בבתי ספר")
-    except Exception as e:
-        st.info("אין מספיק נתונים")
-
-st.markdown("---")
-
-# דיווח מהיר על ציוד
-st.subheader("🔧 דיווח חוסר ציוד")
-
-with st.form("quick_equipment_report"):
-    col_eq1, col_eq2 = st.columns(2)
-    
-    with col_eq1:
-        # שליפת רשימת ציוד
-        try:
-            equipment_list = supabase.table("equipment").select("id, name").execute()
-            equipment_options = {item['name']: item['id'] for item in equipment_list.data} if equipment_list.data else {}
-            
-            selected_equipment = st.selectbox("בחר פריט ציוד", list(equipment_options.keys()) if equipment_options else ["אין ציוד במערכת"])
-        except:
-            equipment_options = {}
-            selected_equipment = st.text_input("שם הציוד החסר")
-    
-    with col_eq2:
-        quantity_needed = st.number_input("כמות נדרשת", min_value=1, value=1)
-    
-    urgency = st.selectbox("רמת דחיפות", ["low", "medium", "high"], 
-                          format_func=lambda x: {"low": "נמוכה", "medium": "בינונית", "high": "גבוהה"}[x])
-    
-    notes = st.text_area("הערות נוספות (אופציונלי)")
-    
-    submit_report = st.form_submit_button("📝 שלח דיווח", use_container_width=True)
-    
-    if submit_report:
-        try:
-            if equipment_options and selected_equipment in equipment_options:
-                report_data = {
-                    "equipment_id": equipment_options[selected_equipment],
-                    "employee_id": user['id'],
-                    "quantity_needed": quantity_needed,
-                    "urgency": urgency,
-                    "status": "pending",
-                    "notes": notes if notes else None
-                }
-                
-                supabase.table("equipment_reports").insert(report_data).execute()
-                st.success("✅ הדיווח נשלח בהצלחה!")
-                st.rerun()
-            else:
-                st.error("אנא בחר ציוד מהרשימה")
-        except Exception as e:
-            st.error(f"שגיאה בשליחת הדיווח: {str(e)}")
+st.markdown("</div>", unsafe_allow_html=True)
