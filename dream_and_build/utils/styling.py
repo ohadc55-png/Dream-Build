@@ -34,17 +34,63 @@ def apply_custom_css():
         font-family: 'Heebo', sans-serif !important;
     }
     
+    /* ===== רקע עם תמונת סדנא ===== */
     .stApp {
-        background-color: var(--gray-100);
+        background-image: linear-gradient(rgba(243, 244, 246, 0.58), rgba(243, 244, 246, 0.58)), url('https://i.postimg.cc/TY5ZZGd5/סדנא.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
     }
     
-    /* ===== הסתרת תפריט ברירת מחדל ===== */
+    /* ===== הסתרת תפריט ברירת מחדל של Streamlit ===== */
     [data-testid="stSidebarNav"] {
         display: none !important;
     }
     
-    #MainMenu, footer, header {
+    #MainMenu, footer {
         visibility: hidden;
+    }
+    
+    /* ===== וידוא שכפתור פתיחת Sidebar נראה ===== */
+    [data-testid="collapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        color: var(--primary-dark) !important;
+        background: white !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    }
+    
+    [data-testid="collapsedControl"]:hover {
+        background: var(--orange-accent) !important;
+        color: white !important;
+    }
+    
+    /* ===== שיפור נראות ה-Sidebar Toggle ===== */
+    button[kind="header"] {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    /* ===== וידוא נוסף שהחץ נראה ===== */
+    .css-1dp5vir, .css-1rs6os, .css-17lntkn {
+        visibility: visible !important;
+        display: flex !important;
+    }
+    
+    /* ===== לוגו קטן בפינה (בדפים פנימיים) ===== */
+    .page-header-logo {
+        position: fixed;
+        top: 0.75rem;
+        left: 1rem;
+        z-index: 999;
+        opacity: 0.9;
+    }
+    
+    .page-header-logo img {
+        width: 50px;
+        height: auto;
     }
     
     /* ===== Sidebar ===== */
@@ -366,3 +412,12 @@ def create_metric_card(title: str, value: str, color: str = "default", icon: str
 def create_badge(text: str, status: str = "info"):
     """יצירת Badge"""
     return f'<span class="badge badge-{status}">{text}</span>'
+
+
+def show_page_logo():
+    """הצגת לוגו קטן בפינת הדף"""
+    st.markdown("""
+    <div class="page-header-logo">
+        <img src='https://i.postimg.cc/SKL4H4GV/לוגו-D-B.png' alt='Logo'>
+    </div>
+    """, unsafe_allow_html=True)

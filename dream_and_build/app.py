@@ -24,7 +24,13 @@ st.markdown("""
 * { font-family: 'Heebo', sans-serif !important; }
 
 [data-testid="stSidebar"] { display: none; }
-#MainMenu, footer, header { visibility: hidden; }
+#MainMenu, footer { visibility: hidden; }
+
+/* וידוא שחץ פתיחת Sidebar נראה */
+[data-testid="collapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+}
 
 .login-container {
     max-width: 420px;
@@ -38,7 +44,8 @@ st.markdown("""
 }
 
 .login-logo {
-    font-size: 4rem;
+    width: 120px;
+    height: auto;
     margin-bottom: 1rem;
 }
 
@@ -58,8 +65,12 @@ st.markdown("""
     font-size: 1rem;
 }
 
+/* רקע עם תמונת סדנא */
 .stApp {
-    background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+    background-image: linear-gradient(rgba(248, 250, 252, 0.58), rgba(226, 232, 240, 0.58)), url('https://i.postimg.cc/TY5ZZGd5/סדנא.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 .stTabs [data-baseweb="tab-list"] {
@@ -84,11 +95,12 @@ st.markdown("""
 }
 
 div[data-testid="stForm"] {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
     padding: 2rem;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     border: 1px solid #E5E7EB;
+    backdrop-filter: blur(10px);
 }
 
 .stButton > button {
@@ -109,12 +121,13 @@ div[data-testid="stForm"] {
 }
 
 .feature-box {
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
     padding: 1.5rem;
     border-radius: 12px;
     text-align: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     border: 1px solid #E5E7EB;
+    backdrop-filter: blur(10px);
 }
 
 .feature-icon {
@@ -152,7 +165,7 @@ else:
     # Header
     st.markdown("""
     <div class="login-header">
-        <div class="login-logo">🔨</div>
+        <img src='https://i.postimg.cc/SKL4H4GV/לוגו-D-B.png' class='login-logo' alt='Dream & Build Logo'>
         <h1 class="login-title">Dream & <span>Build</span></h1>
         <p class="login-subtitle">מערכת ניהול סדנאות נגרות</p>
     </div>

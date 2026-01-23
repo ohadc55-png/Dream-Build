@@ -8,9 +8,9 @@ def render_sidebar():
         # === לוגו ===
         st.markdown("""
         <div style='text-align: center; padding: 1.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 1.5rem;'>
-            <div style='font-size: 2.5rem; margin-bottom: 0.5rem;'>🔨</div>
-            <div style='font-size: 1.4rem; font-weight: 800; color: white;'>Dream & <span style='color: #FF8C00;'>Build</span></div>
-            <div style='font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.25rem;'>מערכת ניהול סדנאות</div>
+            <img src='https://i.postimg.cc/SKL4H4GV/לוגו-D-B.png' style='width: 100px; height: auto; margin-bottom: 0.5rem;' alt='Dream & Build Logo'>
+            <div style='font-size: 1.2rem; font-weight: 800; color: white;'>Dream & <span style='color: #FF8C00;'>Build</span></div>
+            <div style='font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 0.25rem;'>מערכת ניהול סדנאות</div>
         </div>
         """, unsafe_allow_html=True)
         
