@@ -1,150 +1,106 @@
 import streamlit as st
-from utils.auth import login, register, logout, check_auth
+from utils.auth import login_dev, logout
 from utils.styling import apply_custom_css
-import base64
 
-# הגדרות עמוד
+# --- הגדרות עמוד (חייב להיות ראשון) ---
 st.set_page_config(
-    page_title="Dream & Build - ניהול סדנאות נגרות",
+    page_title="Dream & Build",
     page_icon="🔨",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# החלת עיצוב מותאם
+# --- החלת העיצוב ---
 apply_custom_css()
 
-# בדיקת אימות
+# --- אתחול Session State ---
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'user' not in st.session_state:
     st.session_state.user = None
 
-# עמוד כניסה/הרשמה
+# --- מסך כניסה (אם לא מחובר) ---
 if not st.session_state.authenticated:
     
-    # לוגו
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # עמודות למרכוז הלוגו והטופס
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    
     with col2:
-        st.markdown("<h1 style='text-align: center; font-size: 4rem;'>🔨</h1>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #1A2840;'>Dream & <span style='color: #FF8C00;'>Build</span></h1>", unsafe_allow_html=True)
-    
-    st.markdown("<h2 style='text-align: center; color: #FF8C00;'>מערכת ניהול סדנאות נגרות</h2>", unsafe_allow_html=True)
-    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
-    
-    # טאבים להתחברות והרשמה
-    tab1, tab2 = st.tabs(["🔐 התחברות", "📝 הרשמה"])
-    
-    with tab1:
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        with st.form("login_form", clear_on_submit=False):
-            email = st.text_input("📧 אימייל", placeholder="example@email.com")
-            password = st.text_input("🔒 סיסמה", type="password", placeholder="הכנס סיסמה")
-            submit = st.form_submit_button("כניסה", use_container_width=True)
+        # הצגת לוגו
+        st.image("https://i.postimg.cc/SKL4H4GV/לוגו_D_B.png", use_container_width=True)
+        
+        st.markdown("<h3 style='text-align: center;'>כניסה למערכת</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: gray;'>מצב בדיקה - ללא סיסמה</p>", unsafe_allow_html=True)
+        
+        # טופס כניסה מעוצב
+        with st.form("login_form"):
+            full_name = st.text_input("👤 שם מלא", placeholder="לדוגמה: ישראל ישראלי")
+            email = st.text_input("📧 אימייל", placeholder="your@email.com")
+            
+            # בחירת תפקיד בסטייל
+            role_display = st.radio("בחר תפקיד לכניסה:", 
+                                  ["מנהל מערכת 🛠️", "עובד צוות 👷"], 
+                                  horizontal=True)
+            
+            # המרת התצוגה לקוד
+            role = "manager" if "מנהל" in role_display else "employee"
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit = st.form_submit_button("🚀 כניסה למערכת")
             
             if submit:
-                if email and password:
-                    with st.spinner("מתחבר..."):
-                        result = login(email, password)
-                    if result['success']:
-                        st.session_state.authenticated = True
-                        st.session_state.user = result['user']
-                        st.success("✅ התחברת בהצלחה!")
-                        st.rerun()
-                    else:
-                        st.error(f"❌ {result['message']}")
+                if email and full_name:
+                    result = login_dev(email, role, full_name)
+                    st.session_state.authenticated = True
+                    st.session_state.user = result['user']
+                    st.toast(result['message'], icon="✅")
+                    st.rerun()
                 else:
-                    st.warning("⚠️ נא למלא את כל השדות")
-    
-    with tab2:
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        with st.form("register_form", clear_on_submit=False):
-            full_name = st.text_input("👤 שם מלא", placeholder="הכנס שם מלא")
-            email_reg = st.text_input("📧 אימייל", placeholder="example@email.com", key="email_reg")
-            phone = st.text_input("📱 טלפון", placeholder="050-1234567")
-            password_reg = st.text_input("🔒 סיסמה", type="password", placeholder="בחר סיסמה חזקה", key="pass_reg")
-            password_confirm = st.text_input("🔒 אימות סיסמה", type="password", placeholder="הכנס סיסמה שוב", key="pass_confirm")
-            role = st.selectbox("תפקיד", ["employee", "manager"], 
-                               format_func=lambda x: "עובד" if x == "employee" else "מנהל")
-            
-            submit_reg = st.form_submit_button("הרשמה", use_container_width=True)
-            
-            if submit_reg:
-                if not all([full_name, email_reg, phone, password_reg, password_confirm]):
-                    st.warning("⚠️ נא למלא את כל השדות")
-                elif password_reg != password_confirm:
-                    st.error("❌ הסיסמאות לא תואמות")
-                elif len(password_reg) < 6:
-                    st.error("❌ הסיסמה חייבת להכיל לפחות 6 תווים")
-                else:
-                    with st.spinner("נרשם..."):
-                        result = register(email_reg, password_reg, full_name, phone, role)
-                    if result['success']:
-                        st.success("✅ נרשמת בהצלחה! אפשר להתחבר עכשיו")
-                        st.balloons()
-                    else:
-                        st.error(f"❌ {result['message']}")
+                    st.warning("נא למלא שם ואימייל")
 
-# עמוד ראשי לאחר התחברות
+# --- האפליקציה עצמה (אחרי התחברות) ---
 else:
-    # Sidebar
+    # --- Sidebar ---
     with st.sidebar:
-        st.markdown("<h1 style='text-align: center; font-size: 2.5rem;'>🔨</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center;'>Dream & Build</h3>", unsafe_allow_html=True)
+        st.image("https://i.postimg.cc/SKL4H4GV/לוגו_D_B.png", use_container_width=True)
         
-        st.markdown("---")
-        user_name = st.session_state.user.get('full_name', 'משתמש')
-        user_role = st.session_state.user.get('role', 'employee')
+        user = st.session_state.user
+        st.markdown(f"""
+        <div style='background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin: 10px 0;'>
+            <div style='font-size: 0.9rem; color: #aaa;'>שלום,</div>
+            <div style='font-size: 1.2rem; font-weight: bold; color: white;'>{user['full_name']}</div>
+            <div style='font-size: 0.9rem; color: #FF8C00;'>{role_display if 'role_display' in locals() else ('מנהל' if user['role']=='manager' else 'עובד')}</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.markdown(f"### שלום, {user_name}! 👋")
-        st.markdown(f"**תפקיד:** {'מנהל' if user_role == 'manager' else 'עובד'}")
-        st.markdown("---")
+        st.markdown("### 📌 תפריט ראשי")
         
-        # תפריט ניווט - מותאם בדיוק לשמות הקבצים בתמונה שלך (בלי מספרים)
-        st.markdown("### 📌 תפריט")
-        if user_role == 'manager':
-            st.page_link("pages/dashboard_manager.py", label="📊 דשבורד מנהלים")
-            st.page_link("pages/schools.py", label="🏫 ניהול בתי ספר")
-            st.page_link("pages/employees.py", label="👥 ניהול עובדים")
-            st.page_link("pages/schedule.py", label="📅 ניהול לו״ז")
-            st.page_link("pages/equipment.py", label="🔧 ניהול ציוד")
-            st.page_link("pages/finance.py", label="💰 דוחות כספיים")
+        # תפריט מותאם אישית לפי תפקיד
+        if user['role'] == 'manager':
+            st.page_link("pages/dashboard_manager.py", label="דשבורד מנהלים", icon="📊")
+            st.page_link("pages/schools.py", label="ניהול בתי ספר", icon="🏫")
+            st.page_link("pages/employees.py", label="ניהול עובדים", icon="👥")
+            st.page_link("pages/schedule.py", label="ניהול לו״ז", icon="📅")
+            st.page_link("pages/equipment.py", label="ניהול ציוד", icon="🔧")
+            st.page_link("pages/finance.py", label="דוחות כספיים", icon="💰")
         else:
-            st.page_link("pages/dashboard_employee.py", label="👷 הדשבורד שלי")
-            st.page_link("pages/schedule.py", label="📅 הלו״ז שלי")
-            st.page_link("pages/equipment.py", label="🔧 דיווח ציוד")
-        
+            st.page_link("pages/dashboard_employee.py", label="הדשבורד שלי", icon="👷")
+            st.page_link("pages/schedule.py", label="הלו״ז שלי", icon="📅")
+            st.page_link("pages/equipment.py", label="דיווח ציוד", icon="🔧")
+            
         st.markdown("---")
-        if st.button("🚪 התנתקות", use_container_width=True, type="primary"):
+        if st.button("יציאה מהמערכת 🚪"):
             logout()
-            st.rerun()
+
+    # --- תוכן ראשי ---
+    st.title("ברוכים הבאים ל-Dream & Build")
+    st.markdown("בחר בתפריט בצד כדי להתחיל לעבוד.")
     
-    # תוכן ראשי
-    st.title("🔨 ברוכים הבאים ל-Dream & Build")
+    # הצגה ויזואלית יפה לדף הבית הריק
+    col1, col2 = st.columns(2)
+    with col1:
+        st.info(f"אתה מחובר כעת כ**{user['full_name']}** ({'מנהל' if user['role']=='manager' else 'עובד'}).")
     
-    if st.session_state.user.get('role') == 'manager':
-        st.markdown("### 📊 מערכת ניהול סדנאות נגרות למנהלים")
-        st.info("👈 בחר דף מהתפריט בצד כדי להתחיל")
-        
-        # סטטיסטיקות מהירות
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("פעילויות היום", "0", "")
-        with col2:
-            st.metric("עובדים פעילים", "0", "")
-        with col3:
-            st.metric("בתי ספר", "0", "")
-        with col4:
-            st.metric("התראות ציוד", "0", "🔴")
-    else:
-        st.markdown("### 👷 הדשבורד האישי שלך")
-        st.info("👈 בחר דף מהתפריט בצד")
-        
-        # סטטיסטיקות עובד
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("פעילויות החודש", "0", "")
-        with col2:
-            st.metric("פעילויות השבוע", "0", "")
-        with col3:
-            st.metric("בתי ספר", "0", "")
+    with col2:
+        st.markdown("### 🚀 מה חדש?")
+        st.caption("המערכת בגרסת בדיקה. כל הנתונים נשמרים, אך הכניסה ללא סיסמה.")
