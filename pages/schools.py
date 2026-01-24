@@ -31,8 +31,16 @@ tab1, tab2, tab3, tab4 = st.tabs(["📋 רשימה ותקציבים", "📅 פע
 # ========================================
 with tab1:
     try:
+        # פילטר סטטוס
+        status_filter = st.radio("הצג:", ["פעילים", "ארכיון", "הכל"], horizontal=True)
+        
         # שליפת בתי ספר
-        schools = supabase.table("schools").select("*").order("name").execute()
+        if status_filter == "פעילים":
+            schools = supabase.table("schools").select("*").eq("status", "active").order("name").execute()
+        elif status_filter == "ארכיון":
+            schools = supabase.table("schools").select("*").eq("status", "archived").order("name").execute()
+        else:
+            schools = supabase.table("schools").select("*").order("name").execute()
         
         # שליפת תקציבים
         current_year = datetime.now().year
@@ -226,6 +234,60 @@ with tab1:
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
+                    
+                    # === מחיקה/השבתה של בית ספר ===
+                    st.markdown("---")
+                    st.markdown("#### 🗑️ הסרת בית ספר")
+                    
+                    # בדיקה אם יש פעילויות לבית הספר
+                    activities_count = supabase.table("activities").select("id").eq("school_id", selected_school['id']).execute()
+                    has_activities = len(activities_count.data) > 0 if activities_count.data else False
+                    
+                    if has_activities:
+                        st.warning(f"⚠️ לבית ספר זה יש {len(activities_count.data)} פעילויות. לא ניתן למחוק לצמיתות - רק להעביר לארכיון.")
+                        
+                        if selected_school.get('status') == 'active':
+                            if st.button("📦 העבר לארכיון", key="archive_school", use_container_width=True):
+                                supabase.table("schools").update({"status": "archived"}).eq("id", selected_school['id']).execute()
+                                st.success("✅ בית הספר הועבר לארכיון")
+                                st.rerun()
+                        else:
+                            if st.button("♻️ שחזר מארכיון", key="restore_school", use_container_width=True):
+                                supabase.table("schools").update({"status": "active"}).eq("id", selected_school['id']).execute()
+                                st.success("✅ בית הספר שוחזר")
+                                st.rerun()
+                    else:
+                        col_archive, col_delete = st.columns(2)
+                        with col_archive:
+                            if selected_school.get('status') == 'active':
+                                if st.button("📦 העבר לארכיון", key="archive_school2", use_container_width=True):
+                                    supabase.table("schools").update({"status": "archived"}).eq("id", selected_school['id']).execute()
+                                    st.success("✅ הועבר לארכיון")
+                                    st.rerun()
+                            else:
+                                if st.button("♻️ שחזר", key="restore_school2", use_container_width=True):
+                                    supabase.table("schools").update({"status": "active"}).eq("id", selected_school['id']).execute()
+                                    st.success("✅ שוחזר")
+                                    st.rerun()
+                        with col_delete:
+                            if st.button("🗑️ מחק לצמיתות", key="delete_school", type="secondary", use_container_width=True):
+                                st.session_state['confirm_delete_school'] = selected_school['id']
+                        
+                        # אישור מחיקה
+                        if st.session_state.get('confirm_delete_school') == selected_school['id']:
+                            st.error("⚠️ פעולה זו בלתי הפיכה!")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                if st.button("✅ כן, מחק", key="confirm_del_school", use_container_width=True):
+                                    supabase.table("school_budgets").delete().eq("school_id", selected_school['id']).execute()
+                                    supabase.table("schools").delete().eq("id", selected_school['id']).execute()
+                                    st.success("🗑️ בית הספר נמחק")
+                                    del st.session_state['confirm_delete_school']
+                                    st.rerun()
+                            with col2:
+                                if st.button("❌ ביטול", key="cancel_del_school", use_container_width=True):
+                                    del st.session_state['confirm_delete_school']
+                                    st.rerun()
         else:
             st.info("אין בתי ספר במערכת. הוסף בית ספר ראשון!")
             

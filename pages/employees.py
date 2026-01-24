@@ -31,21 +31,23 @@ tab1, tab2, tab3 = st.tabs(["📋 רשימת עובדים", "💰 חישוב ש�
 # ========================================
 with tab1:
     # פילטרים
-    col_f1, col_f2 = st.columns([2, 1])
+    col_f1, col_f2, col_f3 = st.columns([2, 1, 1])
     with col_f1:
         search = st.text_input("🔍 חיפוש", placeholder="שם או אימייל...")
     with col_f2:
-        status_filter = st.selectbox("סטטוס", ["הכל", "פעיל", "לא פעיל"])
+        status_filter = st.selectbox("סטטוס", ["פעילים", "ארכיון", "הכל"])
+    with col_f3:
+        pass  # ריק לאיזון
     
     try:
         # שליפת עובדים
         query = supabase.table("users").select("*").eq("role", "employee").order("full_name")
         if search:
             query = query.or_(f"full_name.ilike.%{search}%,email.ilike.%{search}%")
-        if status_filter == "פעיל":
+        if status_filter == "פעילים":
             query = query.eq("status", "active")
-        elif status_filter == "לא פעיל":
-            query = query.eq("status", "inactive")
+        elif status_filter == "ארכיון":
+            query = query.eq("status", "archived")
         
         employees = query.execute()
         
@@ -137,6 +139,59 @@ with tab1:
                         }).eq("id", selected_emp['id']).execute()
                         st.success("✅ נשמר!")
                         st.rerun()
+                
+                # === מחיקה/השבתה של עובד ===
+                st.markdown("---")
+                st.markdown("#### 🗑️ הסרת עובד")
+                
+                # בדיקה אם יש פעילויות לעובד
+                emp_activities = supabase.table("activities").select("id").eq("employee_id", selected_emp['id']).execute()
+                has_activities = len(emp_activities.data) > 0 if emp_activities.data else False
+                
+                if has_activities:
+                    st.warning(f"⚠️ לעובד זה יש {len(emp_activities.data)} פעילויות. לא ניתן למחוק לצמיתות - רק להעביר לארכיון.")
+                    
+                    if selected_emp.get('status') == 'active':
+                        if st.button("📦 העבר לארכיון (לא פעיל)", key="archive_emp", use_container_width=True):
+                            supabase.table("users").update({"status": "archived"}).eq("id", selected_emp['id']).execute()
+                            st.success("✅ העובד הועבר לארכיון")
+                            st.rerun()
+                    elif selected_emp.get('status') == 'archived':
+                        if st.button("♻️ שחזר מארכיון", key="restore_emp", use_container_width=True):
+                            supabase.table("users").update({"status": "active"}).eq("id", selected_emp['id']).execute()
+                            st.success("✅ העובד שוחזר")
+                            st.rerun()
+                else:
+                    col_archive, col_delete = st.columns(2)
+                    with col_archive:
+                        if selected_emp.get('status') == 'active':
+                            if st.button("📦 העבר לארכיון", key="archive_emp2", use_container_width=True):
+                                supabase.table("users").update({"status": "archived"}).eq("id", selected_emp['id']).execute()
+                                st.success("✅ הועבר לארכיון")
+                                st.rerun()
+                        else:
+                            if st.button("♻️ שחזר", key="restore_emp2", use_container_width=True):
+                                supabase.table("users").update({"status": "active"}).eq("id", selected_emp['id']).execute()
+                                st.success("✅ שוחזר")
+                                st.rerun()
+                    with col_delete:
+                        if st.button("🗑️ מחק לצמיתות", key="delete_emp", type="secondary", use_container_width=True):
+                            st.session_state['confirm_delete_emp'] = selected_emp['id']
+                    
+                    # אישור מחיקה
+                    if st.session_state.get('confirm_delete_emp') == selected_emp['id']:
+                        st.error("⚠️ פעולה זו בלתי הפיכה!")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("✅ כן, מחק", key="confirm_del_emp", use_container_width=True):
+                                supabase.table("users").delete().eq("id", selected_emp['id']).execute()
+                                st.success("🗑️ העובד נמחק")
+                                del st.session_state['confirm_delete_emp']
+                                st.rerun()
+                        with col2:
+                            if st.button("❌ ביטול", key="cancel_del_emp", use_container_width=True):
+                                del st.session_state['confirm_delete_emp']
+                                st.rerun()
         else:
             st.info("אין עובדים במערכת")
             
