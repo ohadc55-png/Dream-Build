@@ -1,7 +1,5 @@
 import streamlit as st
 from utils.supabase_client import supabase
-import secrets
-import string
 
 def register(email: str, password: str, full_name: str, phone: str, role: str):
     """רישום משתמש חדש"""
@@ -133,54 +131,3 @@ def get_current_user():
     if st.session_state.get('authenticated'):
         return st.session_state.get('user')
     return None
-
-
-def create_employee_by_manager(email: str, full_name: str, phone: str = None, hourly_rate: float = 0.0, daily_rate: float = 0.0):
-    """יצירת עובד חדש על ידי מנהל - ללא צורך בהרשמה עצמאית של העובד"""
-    try:
-        # יצירת סיסמה זמנית אקראית
-        temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
-        
-        # יצירת משתמש ב-Supabase Auth
-        # הערה: אם Supabase מוגדר לדרוש אישור אימייל, יש להגדיר auto-confirm ב-Supabase Dashboard
-        auth_response = supabase.auth.sign_up({
-            "email": email,
-            "password": temp_password
-        })
-        
-        if auth_response.user:
-            # הוספת פרטים נוספים לטבלת users
-            user_data = {
-                "id": auth_response.user.id,
-                "email": email,
-                "full_name": full_name,
-                "phone": phone or None,
-                "role": "employee",
-                "status": "active",
-                "hourly_rate": hourly_rate,
-                "daily_rate": daily_rate
-            }
-            
-            supabase.table("users").insert(user_data).execute()
-            
-            return {
-                "success": True,
-                "message": f"העובד '{full_name}' נוסף בהצלחה!",
-                "temp_password": temp_password,
-                "user": user_data
-            }
-        else:
-            return {
-                "success": False,
-                "message": "שגיאה ביצירת המשתמש"
-            }
-    except Exception as e:
-        error_msg = str(e)
-        if "duplicate" in error_msg.lower() or "already registered" in error_msg.lower():
-            return {"success": False, "message": "עובד עם אימייל זה כבר קיים במערכת"}
-        elif "rate" in error_msg.lower():
-            return {"success": False, "message": "נסיונות רבים מדי. נסה שוב בעוד דקה"}
-        return {
-            "success": False,
-            "message": f"שגיאה: {error_msg}"
-        }

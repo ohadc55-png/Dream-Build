@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.auth import require_role, create_employee_by_manager
+from utils.auth import require_role
 from utils.styling import apply_custom_css
 from utils.supabase_client import supabase
 from utils.nav import render_sidebar
@@ -246,36 +246,29 @@ with tab3:
             new_hourly = st.number_input("תעריף שעתי (₪)", min_value=0.0, value=0.0)
             new_daily = st.number_input("תעריף יומי (₪)", min_value=0.0, value=0.0)
         
-        st.info("💡 העובד יירשם עם סיסמה זמנית. הסיסמה תוצג לאחר ההוספה - העבר אותה לעובד כדי שיוכל להתחבר")
+        st.info("💡 העובד יירשם עם סיסמה זמנית ויוכל לשנות אותה")
         
         if st.form_submit_button("➕ הוסף עובד", use_container_width=True):
             if not new_name or not new_email:
                 st.error("❌ נא למלא שם ואימייל")
             else:
-                with st.spinner("מוסיף עובד..."):
-                    result = create_employee_by_manager(
-                        email=new_email,
-                        full_name=new_name,
-                        phone=new_phone,
-                        hourly_rate=new_hourly,
-                        daily_rate=new_daily
-                    )
-                
-                if result['success']:
-                    st.success(f"✅ {result['message']}")
+                try:
+                    # יצירת משתמש (בגרסה פשוטה - ישירות לטבלה)
+                    supabase.table("users").insert({
+                        "id": new_email,  # ID זמני
+                        "email": new_email,
+                        "full_name": new_name,
+                        "phone": new_phone or None,
+                        "role": "employee",
+                        "status": "active",
+                        "hourly_rate": new_hourly,
+                        "daily_rate": new_daily
+                    }).execute()
+                    st.success(f"✅ העובד '{new_name}' נוסף בהצלחה!")
                     st.balloons()
-                    
-                    # הצגת סיסמה זמנית
-                    st.markdown("---")
-                    st.markdown("### 🔑 פרטי התחברות לעובד")
-                    st.markdown(f"""
-                    <div style='background: #FEF3C7; padding: 1.5rem; border-radius: 12px; border-right: 4px solid #F59E0B;'>
-                        <div style='font-weight: 600; color: #92400E; margin-bottom: 0.5rem;'>⚠️ חשוב: העבר את הפרטים הבאים לעובד</div>
-                        <div style='margin-bottom: 0.5rem;'><strong>אימייל:</strong> {new_email}</div>
-                        <div style='margin-bottom: 0.5rem;'><strong>סיסמה זמנית:</strong> <code style='background: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 1.1rem;'>{result['temp_password']}</code></div>
-                        <div style='font-size: 0.9rem; color: #78350F; margin-top: 0.5rem;'>💡 העובד יוכל לשנות את הסיסמה לאחר ההתחברות הראשונה</div>
-                    </div>
-                    """, unsafe_allow_html=True)
                     st.rerun()
-                else:
-                    st.error(f"❌ {result['message']}")
+                except Exception as e:
+                    if "duplicate" in str(e).lower():
+                        st.error("❌ עובד עם אימייל זה כבר קיים")
+                    else:
+                        st.error(f"❌ שגיאה: {str(e)}")
