@@ -32,7 +32,11 @@ tab1, tab2, tab3, tab4 = st.tabs(["📋 רשימה ותקציבים", "📅 פע
 with tab1:
     try:
         # פילטר סטטוס
-        status_filter = st.radio("הצג:", ["פעילים", "ארכיון", "הכל"], horizontal=True)
+        col_filter1, col_filter2 = st.columns([1, 1])
+        with col_filter1:
+            status_filter = st.radio("הצג:", ["פעילים", "ארכיון", "הכל"], horizontal=True)
+        with col_filter2:
+            year_filter = st.selectbox("שנה לחישוב תקציב:", [2025, 2026, 2024, "הכל"], index=0)
         
         # שליפת בתי ספר
         if status_filter == "פעילים":
@@ -47,9 +51,13 @@ with tab1:
         budgets = supabase.table("school_budgets").select("*").eq("year", current_year).execute()
         budgets_dict = {b['school_id']: b for b in budgets.data} if budgets.data else {}
         
-        # שליפת פעילויות שהושלמו השנה
-        year_start = f"{current_year}-01-01"
-        activities = supabase.table("activities").select("school_id, status").gte("date", year_start).in_("status", ["completed", "confirmed"]).execute()
+        # שליפת פעילויות - לפי הפילטר שנבחר
+        if year_filter == "הכל":
+            activities = supabase.table("activities").select("school_id, status").in_("status", ["completed", "confirmed"]).execute()
+        else:
+            year_start = f"{year_filter}-01-01"
+            year_end = f"{year_filter}-12-31"
+            activities = supabase.table("activities").select("school_id, status").gte("date", year_start).lte("date", year_end).in_("status", ["completed", "confirmed"]).execute()
         
         # חישוב פעילויות לכל בית ספר
         activities_count = {}
