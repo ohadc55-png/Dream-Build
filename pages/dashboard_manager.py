@@ -242,28 +242,64 @@ with tab_import:
                     elif import_type == "פעילויות היסטוריות":
                         schools_db = supabase.table("schools").select("id, name").execute()
                         employees_db = supabase.table("users").select("id, full_name").eq("role", "employee").execute()
-                        school_map = {s['name']: s['id'] for s in schools_db.data} if schools_db.data else {}
-                        emp_map = {e['full_name']: e['id'] for e in employees_db.data} if employees_db.data else {}
+                        school_map = {s['name'].strip(): s['id'] for s in schools_db.data} if schools_db.data else {}
+                        emp_map = {e['full_name'].strip(): e['id'] for e in employees_db.data} if employees_db.data else {}
                         
-                        for _, row in df.iterrows():
+                        # הצגת מידע לדיבוג
+                        st.markdown("#### 🔍 בדיקת התאמה:")
+                        st.markdown(f"**בתי ספר במערכת:** {list(school_map.keys())}")
+                        st.markdown(f"**מדריכים במערכת:** {list(emp_map.keys())}")
+                        
+                        errors_detail = []
+                        
+                        for idx, row in df.iterrows():
                             try:
-                                school_id = school_map.get(row.get('school_name'))
-                                emp_id = emp_map.get(row.get('employee_name'))
-                                if school_id and emp_id:
-                                    supabase.table("activities").insert({
-                                        "school_id": school_id,
-                                        "employee_id": emp_id,
-                                        "date": str(row.get('date'))[:10],
-                                        "time_start": str(row.get('time_start', '08:00')),
-                                        "time_end": str(row.get('time_end', '14:00')),
-                                        "status": row.get('status', 'completed'),
-                                        "confirmed_by_employee": True
-                                    }).execute()
-                                    success_count += 1
+                                school_name = str(row.get('school_name', '')).strip()
+                                emp_name = str(row.get('employee_name', '')).strip()
+                                
+                                school_id = school_map.get(school_name)
+                                emp_id = emp_map.get(emp_name)
+                                
+                                if not school_id:
+                                    error_count += 1
+                                    errors_detail.append(f"שורה {idx+2}: בית ספר '{school_name}' לא נמצא במערכת")
+                                    continue
+                                if not emp_id:
+                                    error_count += 1
+                                    errors_detail.append(f"שורה {idx+2}: מדריך '{emp_name}' לא נמצא במערכת")
+                                    continue
+                                
+                                # המרת תאריך
+                                date_val = row.get('date')
+                                if pd.notna(date_val):
+                                    if isinstance(date_val, str):
+                                        date_str = date_val[:10]
+                                    else:
+                                        date_str = pd.to_datetime(date_val).strftime('%Y-%m-%d')
                                 else:
                                     error_count += 1
-                            except:
+                                    errors_detail.append(f"שורה {idx+2}: תאריך חסר")
+                                    continue
+                                
+                                supabase.table("activities").insert({
+                                    "school_id": school_id,
+                                    "employee_id": emp_id,
+                                    "date": date_str,
+                                    "time_start": str(row.get('time_start', '08:00')),
+                                    "time_end": str(row.get('time_end', '14:00')),
+                                    "status": row.get('status', 'completed') if pd.notna(row.get('status')) else 'completed',
+                                    "confirmed_by_employee": True
+                                }).execute()
+                                success_count += 1
+                            except Exception as e:
                                 error_count += 1
+                                errors_detail.append(f"שורה {idx+2}: {str(e)[:50]}")
+                        
+                        # הצגת שגיאות מפורטות
+                        if errors_detail:
+                            st.markdown("#### ❌ פירוט שגיאות:")
+                            for err in errors_detail[:20]:
+                                st.text(err)
                     
                     elif import_type == "רשומות כספיות":
                         for _, row in df.iterrows():
