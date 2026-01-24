@@ -180,7 +180,20 @@ with tab_import:
     if uploaded_file:
         try:
             if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
+                # ניסיון קידודים שונים
+                try:
+                    df = pd.read_csv(uploaded_file, encoding='utf-8')
+                except:
+                    uploaded_file.seek(0)
+                    try:
+                        df = pd.read_csv(uploaded_file, encoding='utf-8-sig')
+                    except:
+                        uploaded_file.seek(0)
+                        try:
+                            df = pd.read_csv(uploaded_file, encoding='cp1255')  # עברית
+                        except:
+                            uploaded_file.seek(0)
+                            df = pd.read_csv(uploaded_file, encoding='latin-1')
             else:
                 df = pd.read_excel(uploaded_file)
             
