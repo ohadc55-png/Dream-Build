@@ -245,6 +245,23 @@ with tab_import:
                         school_map = {s['name'].strip(): s['id'] for s in schools_db.data} if schools_db.data else {}
                         emp_map = {e['full_name'].strip(): e['id'] for e in employees_db.data} if employees_db.data else {}
                         
+                        # מיפוי סטטוס עברית לאנגלית
+                        status_map = {
+                            'מלשוה': 'completed',
+                            'הושלם': 'completed',
+                            'הושלמה': 'completed',
+                            'completed': 'completed',
+                            'מתוכנן': 'planned',
+                            'מתוכננת': 'planned',
+                            'planned': 'planned',
+                            'מאושר': 'confirmed',
+                            'מאושרת': 'confirmed',
+                            'confirmed': 'confirmed',
+                            'בוטל': 'cancelled',
+                            'בוטלה': 'cancelled',
+                            'cancelled': 'cancelled'
+                        }
+                        
                         # הצגת מידע לדיבוג
                         st.markdown("#### 🔍 בדיקת התאמה:")
                         st.markdown(f"**בתי ספר במערכת:** {list(school_map.keys())}")
@@ -262,32 +279,71 @@ with tab_import:
                                 
                                 if not school_id:
                                     error_count += 1
-                                    errors_detail.append(f"שורה {idx+2}: בית ספר '{school_name}' לא נמצא במערכת")
+                                    errors_detail.append(f"שורה {idx+2}: בית ספר '{school_name}' לא נמצא")
                                     continue
                                 if not emp_id:
                                     error_count += 1
-                                    errors_detail.append(f"שורה {idx+2}: מדריך '{emp_name}' לא נמצא במערכת")
+                                    errors_detail.append(f"שורה {idx+2}: מדריך '{emp_name}' לא נמצא")
                                     continue
                                 
-                                # המרת תאריך
+                                # המרת תאריך - תמיכה בפורמטים שונים
                                 date_val = row.get('date')
                                 if pd.notna(date_val):
                                     if isinstance(date_val, str):
-                                        date_str = date_val[:10]
+                                        date_val = date_val.strip()
+                                        # פורמט DD/MM/YYYY או D/MM/YYYY
+                                        if '/' in date_val:
+                                            parts = date_val.split('/')
+                                            if len(parts) == 3:
+                                                day = parts[0].zfill(2)
+                                                month = parts[1].zfill(2)
+                                                year = parts[2]
+                                                date_str = f"{year}-{month}-{day}"
+                                            else:
+                                                raise Exception("פורמט תאריך לא תקין")
+                                        # פורמט DD.MM.YYYY
+                                        elif '.' in date_val:
+                                            parts = date_val.split('.')
+                                            if len(parts) == 3:
+                                                day = parts[0].zfill(2)
+                                                month = parts[1].zfill(2)
+                                                year = parts[2]
+                                                date_str = f"{year}-{month}-{day}"
+                                            else:
+                                                raise Exception("פורמט תאריך לא תקין")
+                                        # פורמט YYYY-MM-DD
+                                        elif '-' in date_val:
+                                            date_str = date_val[:10]
+                                        else:
+                                            raise Exception("פורמט תאריך לא מוכר")
                                     else:
+                                        # אם זה datetime object מ-Excel
                                         date_str = pd.to_datetime(date_val).strftime('%Y-%m-%d')
                                 else:
                                     error_count += 1
                                     errors_detail.append(f"שורה {idx+2}: תאריך חסר")
                                     continue
                                 
+                                # המרת סטטוס
+                                status_raw = str(row.get('status', 'completed')).strip() if pd.notna(row.get('status')) else 'completed'
+                                status = status_map.get(status_raw, 'completed')
+                                
+                                # המרת שעות
+                                time_start = str(row.get('time_start', '08:00')).strip()
+                                time_end = str(row.get('time_end', '14:00')).strip()
+                                # וידוא פורמט שעה
+                                if len(time_start) == 4:  # 8:00 -> 08:00
+                                    time_start = '0' + time_start
+                                if len(time_end) == 4:
+                                    time_end = '0' + time_end
+                                
                                 supabase.table("activities").insert({
                                     "school_id": school_id,
                                     "employee_id": emp_id,
                                     "date": date_str,
-                                    "time_start": str(row.get('time_start', '08:00')),
-                                    "time_end": str(row.get('time_end', '14:00')),
-                                    "status": row.get('status', 'completed') if pd.notna(row.get('status')) else 'completed',
+                                    "time_start": time_start,
+                                    "time_end": time_end,
+                                    "status": status,
                                     "confirmed_by_employee": True
                                 }).execute()
                                 success_count += 1
